@@ -1,4 +1,4 @@
-package stupidsqlite
+package stupidqlite
 
 import (
 	"fmt"
