@@ -1,3 +1,4 @@
+// Package stupidqlite is a really dumn sqlite query generator
 package stupidqlite
 
 import (
