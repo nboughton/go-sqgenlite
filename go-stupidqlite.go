@@ -28,6 +28,13 @@ func (q *Query) Insert(table string, fields ...string) *Query {
 	return q
 }
 
+// Update generates the first part of an UPDATE statement. a Where clause will be necessary
+// to complete the SQL query
+func (q *Query) Update(table string, fields ...string) *Query {
+	q.SQL = fmt.Sprintf("UPDATE %s SET %s", table, strings.Join(fields, "=?, "))
+	return q
+}
+
 // Get generates a SELECT that can then be chained with further functions
 func (q *Query) Get(fields ...string) *Query {
 	q.SQL = fmt.Sprintf("SELECT %s", strings.Join(fields, ", "))
