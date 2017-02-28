@@ -11,6 +11,34 @@ type Query struct {
 	SQL string
 }
 
+// Conditional represents a sub-generator for conditionals such as in WHERE clauses
+type Conditional func(...string) string
+
+// CondMap is the type used for mapping field sets to conditionals
+type CondMap map[string]Conditional
+
+// Eq returns an = conditional clause, if 2 fields are specified they will be compared
+// eg: f[0] = f[1] otherwise it assumed that you are comparing field[0] to a placeholder
+func Eq(fields ...string) string {
+	if len(fields) > 1 {
+		return fmt.Sprintf("%s=%s", fields[0], fields[1])
+	}
+	return fmt.Sprintf("%s=?", fields[0])
+}
+
+// Like expects only one argument and always assumes you are comparing to a placeholder
+func Like(fields ...string) string {
+	return fmt.Sprintf("%s LIKE ?", fields[0])
+}
+
+// Between expects two fields to and returns a BETWEEN clause
+func Between(fields ...string) string {
+	if len(fields) != 2 {
+		return ""
+	}
+	return fmt.Sprintf("BETWEEN %s AND %s", fields[0], fields[1])
+}
+
 // NewQuery creates a new query object
 func NewQuery() *Query {
 	return new(Query)
@@ -35,8 +63,8 @@ func (q *Query) Update(table string, fields ...string) *Query {
 	return q
 }
 
-// Get generates a SELECT that can then be chained with further functions
-func (q *Query) Get(fields ...string) *Query {
+// Select generates a SELECT that can then be chained with further functions
+func (q *Query) Select(fields ...string) *Query {
 	q.SQL = fmt.Sprintf("SELECT %s", strings.Join(fields, ", "))
 	return q
 }
@@ -47,12 +75,16 @@ func (q *Query) From(table string) *Query {
 	return q
 }
 
-// Where adds len(fields) WHERE/AND clauses
-func (q *Query) Where(fields ...string) *Query {
-	q.SQL = fmt.Sprintf("%s WHERE %s=?", q.SQL, fields[0])
-	if len(fields) > 1 {
-		for _, v := range fields[1:] {
-			q.SQL = fmt.Sprintf("%s AND %s=?", q.SQL, v)
+// Where adds len(fields) WHERE field=?/AND clauses. Multiple field conditionals
+// can be defined in the fields map as CondMap{"field1:field2": Condtional}
+func (q *Query) Where(fields CondMap) *Query {
+	first := true
+	for field, cond := range fields {
+		if first {
+			q.SQL = fmt.Sprintf("%s WHERE %s", q.SQL, cond(strings.Split(field, ":")...))
+			first = false
+		} else {
+			q.SQL = fmt.Sprintf("%s AND %s", q.SQL, cond(strings.Split(field, ":")...))
 		}
 	}
 	return q
