@@ -101,3 +101,9 @@ func (q *Query) Join(table string, fields ...[]string) *Query {
 	q.SQL = fmt.Sprintf("%s JOIN %s ON %s", q.SQL, table, strings.Join(j, ","))
 	return q
 }
+
+// Order appends an ORDER BY statement to a query
+func (q *Query) Order(fields ...string) *Query {
+	q.SQL = fmt.Sprintf("%s ORDER BY %s", q.SQL, strings.Join(fields, ","))
+	return q
+}
