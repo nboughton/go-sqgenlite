@@ -14,8 +14,15 @@ type Query struct {
 // Conditional represents a sub-generator for conditionals such as in WHERE clauses
 type Conditional func(...string) string
 
+// CondStruct is utilised by CondMap so that an ordered Array of conditions can be
+// matched to appropriate values in db.Query/Exec etc
+type CondStruct struct {
+	Op    Conditional
+	Field string
+}
+
 // CondMap is the type used for mapping field sets to conditionals
-type CondMap map[string]Conditional
+type CondMap []CondStruct
 
 // Eq returns an = conditional clause, if 2 fields are specified they will be compared
 // eg: f[0] = f[1] otherwise it assumed that you are comparing field[0] to a placeholder
@@ -78,13 +85,11 @@ func (q *Query) From(table string) *Query {
 // Where adds len(fields) WHERE field=?/AND clauses. Multiple field conditionals
 // can be defined in the fields map as CondMap{"field1:field2": Condtional}
 func (q *Query) Where(fields CondMap) *Query {
-	first := true
-	for field, cond := range fields {
-		if first {
-			q.SQL = fmt.Sprintf("%s WHERE %s", q.SQL, cond(strings.Split(field, ":")...))
-			first = false
+	for i, c := range fields {
+		if i == 0 {
+			q.SQL = fmt.Sprintf("%s WHERE %s", q.SQL, c.Op(strings.Split(c.Field, ":")...))
 		} else {
-			q.SQL = fmt.Sprintf("%s AND %s", q.SQL, cond(strings.Split(field, ":")...))
+			q.SQL = fmt.Sprintf("%s AND %s", q.SQL, c.Op(strings.Split(c.Field, ":")...))
 		}
 	}
 	return q
