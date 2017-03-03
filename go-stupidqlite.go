@@ -41,9 +41,6 @@ func Like(fields ...string) string {
 // Between expects a field and requires the comparison values to be passed in
 // during execution. Returns a BETWEEN clause
 func Between(fields ...string) string {
-	if len(fields) != 2 {
-		return ""
-	}
 	return fmt.Sprintf("%s BETWEEN ? AND ?", fields[0])
 }
 
@@ -111,5 +108,11 @@ func (q *Query) Join(table string, fields ...[]string) *Query {
 // Order appends an ORDER BY statement to a query
 func (q *Query) Order(fields ...string) *Query {
 	q.SQL = fmt.Sprintf("%s ORDER BY %s", q.SQL, strings.Join(fields, ","))
+	return q
+}
+
+// Append is the cop-out method to just string stuff together.
+func (q *Query) Append(s string) *Query {
+	q.SQL = fmt.Sprintf("%s %s", q.SQL, s)
 	return q
 }
