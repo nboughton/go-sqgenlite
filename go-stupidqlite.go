@@ -38,12 +38,13 @@ func Like(fields ...string) string {
 	return fmt.Sprintf("%s LIKE ?", fields[0])
 }
 
-// Between expects two fields to and returns a BETWEEN clause
+// Between expects a field and requires the comparison values to be passed in
+// during execution. Returns a BETWEEN clause
 func Between(fields ...string) string {
 	if len(fields) != 2 {
 		return ""
 	}
-	return fmt.Sprintf("BETWEEN %s AND %s", fields[0], fields[1])
+	return fmt.Sprintf("%s BETWEEN ? AND ?", fields[0])
 }
 
 // NewQuery creates a new query object
