@@ -1,4 +1,4 @@
-// Package stupidqlite is a really dumn sqlite query generator
+// Package stupidqlite is a really dumb sqlite query generator
 package stupidqlite
 
 import (
@@ -14,25 +14,25 @@ type Query struct {
 // Conditional represents a sub-generator for conditionals such as in WHERE clauses
 type Conditional func(...string) string
 
-// CondStruct is utilised by CondMap so that an ordered Array of conditions can be
+// Filter is utilised by FilterSet so that an ordered Array of conditions can be
 // matched to appropriate values in db.Query/Exec etc
-type CondStruct struct {
+type Filter struct {
 	Op    Conditional
 	Field string
 }
 
-// CondMap is the type used for mapping field sets to conditionals
-type CondMap []CondStruct
+// FilterSet is the type used for mapping field sets to conditionals
+type FilterSet []Filter
 
-// NewFilterSet returns a CondMap pointer as a more intuitive way of creating filters
-func NewFilterSet() *CondMap {
-	return new(CondMap)
+// NewFilterSet returns a FilterSet pointer as a more intuitive way of creating filters
+func NewFilterSet() *FilterSet {
+	return new(FilterSet)
 }
 
-// Add adds a condition to the CondMap as a shorthand to improve readability, returns the
-// CondMap so it can be chained
-func (c *CondMap) Add(op Conditional, field string) *CondMap {
-	*c = append(*c, CondStruct{Op: op, Field: field})
+// Add adds a condition to the FilterSet as a shorthand to improve readability, returns the
+// FilterSet so it can be chained
+func (c *FilterSet) Add(op Conditional, field string) *FilterSet {
+	*c = append(*c, Filter{Op: op, Field: field})
 	return c
 }
 
@@ -97,7 +97,7 @@ func (q *Query) From(table string) *Query {
 
 // Where adds len(fields) WHERE fields is a filter set created by
 // NewFilterSet and added to with the .Add function.
-func (q *Query) Where(fields *CondMap) *Query {
+func (q *Query) Where(fields *FilterSet) *Query {
 	for i, c := range *fields {
 		if i == 0 {
 			q.SQL = fmt.Sprintf("%s WHERE %s", q.SQL, c.Op(strings.Split(c.Field, ":")...))
