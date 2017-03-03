@@ -24,6 +24,18 @@ type CondStruct struct {
 // CondMap is the type used for mapping field sets to conditionals
 type CondMap []CondStruct
 
+// NewFilterSet returns a CondMap pointer as a more intuitive way of creating filters
+func NewFilterSet() *CondMap {
+	return new(CondMap)
+}
+
+// Add adds a condition to the CondMap as a shorthand to improve readability, returns the
+// CondMap so it can be chained
+func (c *CondMap) Add(op Conditional, field string) *CondMap {
+	*c = append(*c, CondStruct{Op: op, Field: field})
+	return c
+}
+
 // Eq returns an = conditional clause, if 2 fields are specified they will be compared
 // eg: f[0] = f[1] otherwise it assumed that you are comparing field[0] to a placeholder
 func Eq(fields ...string) string {
@@ -38,9 +50,12 @@ func Like(fields ...string) string {
 	return fmt.Sprintf("%s LIKE ?", fields[0])
 }
 
-// Between expects a field and requires the comparison values to be passed in
-// during execution. Returns a BETWEEN clause
+// Between expects a field and potentially a function i.e DATE(), SUM() etc
+// requires the comparison values to be passed in during execution. Returns a BETWEEN clause
 func Between(fields ...string) string {
+	if len(fields) > 1 {
+		return fmt.Sprintf("%s(%s) BETWEEN %s(?) AND %s(?)", fields[1], fields[0], fields[1], fields[1])
+	}
 	return fmt.Sprintf("%s BETWEEN ? AND ?", fields[0])
 }
 
@@ -80,10 +95,10 @@ func (q *Query) From(table string) *Query {
 	return q
 }
 
-// Where adds len(fields) WHERE field=?/AND clauses. Multiple field conditionals
-// can be defined in the fields map as CondMap{"field1:field2": Condtional}
-func (q *Query) Where(fields CondMap) *Query {
-	for i, c := range fields {
+// Where adds len(fields) WHERE fields is a filter set created by
+// NewFilterSet and added to with the .Add function.
+func (q *Query) Where(fields *CondMap) *Query {
+	for i, c := range *fields {
 		if i == 0 {
 			q.SQL = fmt.Sprintf("%s WHERE %s", q.SQL, c.Op(strings.Split(c.Field, ":")...))
 		} else {
