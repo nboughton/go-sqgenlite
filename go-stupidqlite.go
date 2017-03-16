@@ -127,6 +127,12 @@ func (q *Query) Order(fields ...string) *Query {
 	return q
 }
 
+// Group appends an ORDER BY statement to a query
+func (q *Query) Group(fields ...string) *Query {
+	q.SQL = fmt.Sprintf("%s GROUP BY %s", q.SQL, strings.Join(fields, ","))
+	return q
+}
+
 // Append is the cop-out method to just string stuff together.
 func (q *Query) Append(s string) *Query {
 	q.SQL = fmt.Sprintf("%s %s", q.SQL, s)
