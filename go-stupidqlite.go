@@ -30,9 +30,9 @@ func NewFilterSet() *FilterSet {
 }
 
 // Add adds a condition to the FilterSet as a shorthand to improve readability, returns the
-// FilterSet so it can be chained. For operations that use multiple fields use ':' as a sepatator
+// FilterSet so it can be chained. For operations that use multiple fields use ':' as a separator
 // e.g for a BETWEEN statement using a DATE operator you would use c.Add(Between, "date:DATE")
-func (c *FilterSet) Add(op Conditional, field string) *FilterSet {
+func (c *FilterSet) Add(field string, op Conditional) *FilterSet {
 	*c = append(*c, Filter{Op: op, Field: field})
 	return c
 }
