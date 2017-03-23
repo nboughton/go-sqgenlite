@@ -90,6 +90,12 @@ func (q *Query) Select(fields ...string) *Query {
 	return q
 }
 
+// Delete begins a Delete query.
+func (q *Query) Delete() *Query {
+	q.SQL = "DELETE"
+	return q
+}
+
 // From adds a FROM clause
 func (q *Query) From(table string) *Query {
 	q.SQL = fmt.Sprintf("%s FROM %s", q.SQL, table)
