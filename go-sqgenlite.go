@@ -1,5 +1,5 @@
 // Package stupidqlite is a really dumb sqlite query generator
-package stupidqlite
+package sqgenlite
 
 import (
 	"fmt"
