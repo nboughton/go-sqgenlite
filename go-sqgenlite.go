@@ -1,4 +1,4 @@
-// Package stupidqlite is a really dumb sqlite query generator
+// Package sqgenlite is a really dumb sqlite query generator
 package sqgenlite
 
 import (

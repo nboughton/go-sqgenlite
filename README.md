@@ -1,7 +1,8 @@
-# go-stupidqlite
+# go-sqgenlite
 A really dumb sqlite query generator library
 
-Sweet jesus, don't use this for anything important. It's just a utility lib for hacking together simple SQLite queries. 
-It's not even vaguely complete. The purpose of stupidqlite is to throw together the SQL for an sqlite query that can
-then be extended, usually via a switch or if/else block to address slightly varying queries based on context. At some
-point I might add some examples but this is some 0.01 version code at the moment and it's mostly for my own amusement.
+This is a small, basic utility for avoiding schoolboy errors
+when constructing simple queries for sqlite databases. It
+uses chaining and edits the query in place.
+
+It's mostly a toy. I don't recommend using it for anything important.
