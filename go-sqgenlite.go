@@ -22,7 +22,9 @@ type Filter struct {
 }
 
 // FilterSet is the type used for mapping field sets to conditionals
-type FilterSet []Filter
+type FilterSet struct {
+	filters []Filter
+}
 
 // NewFilterSet returns a FilterSet pointer as a more intuitive way of creating filters
 func NewFilterSet() *FilterSet {
@@ -33,7 +35,7 @@ func NewFilterSet() *FilterSet {
 // FilterSet so it can be chained. For operations that use multiple fields use ':' as a separator
 // e.g for a BETWEEN statement using a DATE operator you would use c.Add(Between, "date:DATE")
 func (c *FilterSet) Add(field string, op Conditional) *FilterSet {
-	*c = append(*c, Filter{Op: op, Field: field})
+	c.filters = append(c.filters, Filter{Op: op, Field: field})
 	return c
 }
 
@@ -105,7 +107,7 @@ func (q *Query) From(table string) *Query {
 // Where adds len(fields) WHERE fields is a filter set created by
 // NewFilterSet and added to with the .Add function.
 func (q *Query) Where(fields *FilterSet) *Query {
-	for i, c := range *fields {
+	for i, c := range fields.filters {
 		if i == 0 {
 			q.SQL = fmt.Sprintf("%s WHERE %s", q.SQL, c.Op(strings.Split(c.Field, ":")...))
 		} else {
