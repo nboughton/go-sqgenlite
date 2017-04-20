@@ -8,58 +8,8 @@ import (
 
 // Query struct that we attach our generate methods to
 type Query struct {
-	SQL string
-}
-
-// Conditional represents a sub-generator for conditionals such as in WHERE clauses
-type Conditional func(...string) string
-
-// Filter is utilised by FilterSet so that an ordered Array of conditions can be
-// matched to appropriate values in db.Query/Exec etc
-type Filter struct {
-	Op    Conditional
-	Field string
-}
-
-// FilterSet is the type used for mapping field sets to conditionals
-type FilterSet struct {
-	filters []Filter
-}
-
-// NewFilterSet returns a FilterSet pointer as a more intuitive way of creating filters
-func NewFilterSet() *FilterSet {
-	return new(FilterSet)
-}
-
-// Add adds a condition to the FilterSet as a shorthand to improve readability, returns the
-// FilterSet so it can be chained. For operations that use multiple fields use ':' as a separator
-// e.g for a BETWEEN statement using a DATE operator you would use c.Add(Between, "date:DATE")
-func (c *FilterSet) Add(field string, op Conditional) *FilterSet {
-	c.filters = append(c.filters, Filter{Op: op, Field: field})
-	return c
-}
-
-// Eq returns an = conditional clause, if 2 fields are specified they will be compared
-// eg: f[0] = f[1] otherwise it assumed that you are comparing field[0] to a placeholder
-func Eq(fields ...string) string {
-	if len(fields) > 1 {
-		return fmt.Sprintf("%s=%s", fields[0], fields[1])
-	}
-	return fmt.Sprintf("%s=?", fields[0])
-}
-
-// Like expects only one argument and always assumes you are comparing to a placeholder
-func Like(fields ...string) string {
-	return fmt.Sprintf("%s LIKE ?", fields[0])
-}
-
-// Between expects a field and potentially a function i.e DATE(), SUM() etc
-// requires the comparison values to be passed in during execution. Returns a BETWEEN clause
-func Between(fields ...string) string {
-	if len(fields) > 1 {
-		return fmt.Sprintf("%s(%s) BETWEEN %s(?) AND %s(?)", fields[1], fields[0], fields[1], fields[1])
-	}
-	return fmt.Sprintf("%s BETWEEN ? AND ?", fields[0])
+	SQL  string
+	Args []interface{}
 }
 
 // NewQuery creates a new query object
@@ -68,7 +18,7 @@ func NewQuery() *Query {
 }
 
 // Insert generates a basic insert statement
-func (q *Query) Insert(table string, fields ...string) *Query {
+func (q *Query) Insert(table string, fields []string, args ...interface{}) *Query {
 	// Generate placeholders
 	var p []string
 	for range fields {
@@ -76,13 +26,15 @@ func (q *Query) Insert(table string, fields ...string) *Query {
 	}
 
 	q.SQL = fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, strings.Join(fields, ","), strings.Join(p, ","))
+	q.Args = append(q.Args, args...)
 	return q
 }
 
 // Update generates the first part of an UPDATE statement. a Where clause will be necessary
 // to complete the SQL query
-func (q *Query) Update(table string, fields ...string) *Query {
+func (q *Query) Update(table string, fields []string, args ...interface{}) *Query {
 	q.SQL = fmt.Sprintf("UPDATE %s SET %s=?", table, strings.Join(fields, "=?, "))
+	q.Args = append(q.Args, args...)
 	return q
 }
 
@@ -106,18 +58,14 @@ func (q *Query) From(table string) *Query {
 
 // Where adds len(fields) WHERE fields is a filter set created by
 // NewFilterSet and added to with the .Add function.
-func (q *Query) Where(fields *FilterSet) *Query {
-	for i, c := range fields.filters {
-		if i == 0 {
-			q.SQL = fmt.Sprintf("%s WHERE %s", q.SQL, c.Op(strings.Split(c.Field, ":")...))
-		} else {
-			q.SQL = fmt.Sprintf("%s AND %s", q.SQL, c.Op(strings.Split(c.Field, ":")...))
-		}
-	}
+func (q *Query) Where(s string, args ...interface{}) *Query {
+	q.SQL = fmt.Sprintf("%s WHERE %s", q.SQL, s)
+	q.Args = append(q.Args, args...)
 	return q
 }
 
-// Join adds a basic JOIN clause using fields to define pairs of matching join fields
+// Join adds a basic JOIN clause using fields to define pairs of matching join fields, this is fine in sqlite as it only
+// recognises inner joins
 func (q *Query) Join(table string, fields ...[]string) *Query {
 	// Generate field pairs
 	var j []string
