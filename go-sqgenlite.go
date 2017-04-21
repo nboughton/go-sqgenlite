@@ -56,8 +56,8 @@ func (q *Query) From(table string) *Query {
 	return q
 }
 
-// Where adds len(fields) WHERE fields is a filter set created by
-// NewFilterSet and added to with the .Add function.
+// Where adds a where clause "field =/LIKE/IN etc ?/"%?%"/(?, ?, ?)" and can take args so that it's easy to ensure that
+// your arguments line up with your ?
 func (q *Query) Where(s string, args ...interface{}) *Query {
 	q.SQL = fmt.Sprintf("%s WHERE %s", q.SQL, s)
 	q.Args = append(q.Args, args...)
@@ -83,7 +83,7 @@ func (q *Query) Order(fields ...string) *Query {
 	return q
 }
 
-// Group appends an ORDER BY statement to a query
+// Group appends an GROUP BY statement to a query
 func (q *Query) Group(fields ...string) *Query {
 	q.SQL = fmt.Sprintf("%s GROUP BY %s", q.SQL, strings.Join(fields, ","))
 	return q
