@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+var (
+	commaSep = ", "
+)
+
 // Query struct that we attach our generate methods to
 type Query struct {
 	SQL  string
@@ -25,7 +29,7 @@ func (q *Query) Insert(table string, fields []string, args ...interface{}) *Quer
 		p = append(p, "?")
 	}
 
-	q.SQL = fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, strings.Join(fields, ","), strings.Join(p, ","))
+	q.SQL = fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, strings.Join(fields, commaSep), strings.Join(p, commaSep))
 	q.Args = append(q.Args, args...)
 	return q
 }
@@ -39,20 +43,14 @@ func (q *Query) Update(table string, fields []string, args ...interface{}) *Quer
 }
 
 // Select generates a SELECT that can then be chained with further functions
-func (q *Query) Select(fields ...string) *Query {
-	q.SQL = fmt.Sprintf("SELECT %s", strings.Join(fields, ", "))
+func (q *Query) Select(table string, fields ...string) *Query {
+	q.SQL = fmt.Sprintf("SELECT %s FROM %s", strings.Join(fields, commaSep), table)
 	return q
 }
 
-// Delete begins a Delete query.
-func (q *Query) Delete() *Query {
-	q.SQL = "DELETE"
-	return q
-}
-
-// From adds a FROM clause
-func (q *Query) From(table string) *Query {
-	q.SQL = fmt.Sprintf("%s FROM %s", q.SQL, table)
+// Delete begins a Delete query, should be refined with a Where clause
+func (q *Query) Delete(table string) *Query {
+	q.SQL = fmt.Sprintf("DELETE FROM %s", table)
 	return q
 }
 
@@ -73,19 +71,19 @@ func (q *Query) Join(table string, fields ...[]string) *Query {
 		j = append(j, fmt.Sprintf("%s=%s", v[0], v[1]))
 	}
 
-	q.SQL = fmt.Sprintf("%s JOIN %s ON %s", q.SQL, table, strings.Join(j, ","))
+	q.SQL = fmt.Sprintf("%s JOIN %s ON %s", q.SQL, table, strings.Join(j, commaSep))
 	return q
 }
 
 // Order appends an ORDER BY statement to a query
 func (q *Query) Order(fields ...string) *Query {
-	q.SQL = fmt.Sprintf("%s ORDER BY %s", q.SQL, strings.Join(fields, ","))
+	q.SQL = fmt.Sprintf("%s ORDER BY %s", q.SQL, strings.Join(fields, commaSep))
 	return q
 }
 
 // Group appends an GROUP BY statement to a query
 func (q *Query) Group(fields ...string) *Query {
-	q.SQL = fmt.Sprintf("%s GROUP BY %s", q.SQL, strings.Join(fields, ","))
+	q.SQL = fmt.Sprintf("%s GROUP BY %s", q.SQL, strings.Join(fields, commaSep))
 	return q
 }
 
