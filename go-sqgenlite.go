@@ -88,7 +88,8 @@ func (q *Query) Group(fields ...string) *Query {
 }
 
 // Append is the cop-out method to just string stuff together.
-func (q *Query) Append(s string) *Query {
+func (q *Query) Append(s string, args ...interface{}) *Query {
 	q.SQL = fmt.Sprintf("%s %s", q.SQL, s)
+	q.Args = append(q.Args, args...)
 	return q
 }
