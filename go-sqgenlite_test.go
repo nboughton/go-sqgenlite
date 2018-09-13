@@ -51,7 +51,7 @@ func TestWhere(t *testing.T) {
 		t.Fatalf("Where failed to create SQL successfully [%s]\n", q.SQL)
 	}
 	if len(q.Args) != 1 {
-		t.Fatalf("Where did not update q.Args properly [%v]\n", len(q.Args))
+		t.Fatalf("Where did not update q.Args properly [%d]\n", len(q.Args))
 	}
 }
 
