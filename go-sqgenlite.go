@@ -12,7 +12,7 @@ var (
 
 // Query struct that we attach our generate methods to
 type Query struct {
-	SQL  string
+	SQL  strings.Builder
 	Args []interface{}
 }
 
@@ -29,7 +29,7 @@ func (q *Query) Insert(table string, fields []string, args ...interface{}) *Quer
 		p = append(p, "?")
 	}
 
-	q.SQL = fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, strings.Join(fields, commaSep), strings.Join(p, commaSep))
+	q.SQL.WriteString(fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", table, strings.Join(fields, commaSep), strings.Join(p, commaSep)))
 	q.Args = append(q.Args, args...)
 	return q
 }
@@ -37,27 +37,27 @@ func (q *Query) Insert(table string, fields []string, args ...interface{}) *Quer
 // Update generates the first part of an UPDATE statement. a Where clause will be necessary
 // to complete the SQL query
 func (q *Query) Update(table string, fields []string, args ...interface{}) *Query {
-	q.SQL = fmt.Sprintf("UPDATE %s SET %s=?", table, strings.Join(fields, "=?, "))
+	q.SQL.WriteString(fmt.Sprintf("UPDATE %s SET %s=?", table, strings.Join(fields, "=?, ")))
 	q.Args = append(q.Args, args...)
 	return q
 }
 
 // Select generates a SELECT that can then be chained with further functions
 func (q *Query) Select(table string, fields ...string) *Query {
-	q.SQL = fmt.Sprintf("SELECT %s FROM %s", strings.Join(fields, commaSep), table)
+	q.SQL.WriteString(fmt.Sprintf("SELECT %s FROM %s", strings.Join(fields, commaSep), table))
 	return q
 }
 
 // Delete begins a Delete query, should be refined with a Where clause
 func (q *Query) Delete(table string) *Query {
-	q.SQL = fmt.Sprintf("DELETE FROM %s", table)
+	q.SQL.WriteString(fmt.Sprintf("DELETE FROM %s", table))
 	return q
 }
 
 // Where adds a where clause "field =/LIKE/IN etc ?/"%?%"/(?, ?, ?)" and can take args so that it's easy to ensure that
 // your arguments line up with your ?
 func (q *Query) Where(s string, args ...interface{}) *Query {
-	q.SQL = fmt.Sprintf("%s WHERE %s", q.SQL, s)
+	q.SQL.WriteString(fmt.Sprintf(" WHERE %s", s))
 	q.Args = append(q.Args, args...)
 	return q
 }
@@ -71,25 +71,30 @@ func (q *Query) Join(table string, fields ...[]string) *Query {
 		j = append(j, fmt.Sprintf("%s=%s", v[0], v[1]))
 	}
 
-	q.SQL = fmt.Sprintf("%s JOIN %s ON %s", q.SQL, table, strings.Join(j, commaSep))
+	q.SQL.WriteString(fmt.Sprintf(" JOIN %s ON %s", table, strings.Join(j, commaSep)))
 	return q
 }
 
 // Order appends an ORDER BY statement to a query
 func (q *Query) Order(fields ...string) *Query {
-	q.SQL = fmt.Sprintf("%s ORDER BY %s", q.SQL, strings.Join(fields, commaSep))
+	q.SQL.WriteString(fmt.Sprintf(" ORDER BY %s", strings.Join(fields, commaSep)))
 	return q
 }
 
 // Group appends an GROUP BY statement to a query
 func (q *Query) Group(fields ...string) *Query {
-	q.SQL = fmt.Sprintf("%s GROUP BY %s", q.SQL, strings.Join(fields, commaSep))
+	q.SQL.WriteString(fmt.Sprintf(" GROUP BY %s", strings.Join(fields, commaSep)))
 	return q
 }
 
 // Append is the cop-out method to just string stuff together.
 func (q *Query) Append(s string, args ...interface{}) *Query {
-	q.SQL = fmt.Sprintf("%s %s", q.SQL, s)
+	q.SQL.WriteString(" " + s)
 	q.Args = append(q.Args, args...)
 	return q
+}
+
+// String implements the Stringer interface for the constructed Query string
+func (q *Query) String() string {
+	return q.SQL.String()
 }
